@@ -2,10 +2,14 @@
 The ``jthomwindlib`` module contains the class WindTurbine that implements
 a wind turbine and functions needed for the modelling of a
 wind turbine.
+In order to avoid "for loops" this library is vectorised with NumPy as a dependency.
 
 SPDX-FileCopyrightText: 2024 <jorgethomasm@ieee.org>
 SPDX-License-Identifier: MIT
 """
+
+import numpy as np  # transform Python to R (or MATLAB) hehehe
+
 
 class WindTurbine:
     """ A custom and simple model of the requiered attributes of a Wind Turbine"""
@@ -13,7 +17,7 @@ class WindTurbine:
     pass
 
 
-def calc_sat_water_vapour_press(temperature):
+def calc_sat_water_vapour_press(temperature: np.ndarray) -> np.ndarray:
      
      """
      Herman Wobus polynomial
@@ -42,15 +46,20 @@ def calc_sat_water_vapour_press(temperature):
 
      return p_sat
 
-def calc_humid_air_density(temperature, relative_humidity, pressure):
+
+def calc_humid_air_density(temperature: np.ndarray, relative_humidity: np.ndarray, pressure: np.ndarray) -> np.ndarray:
     """
     Constants:
     R = 8314.32 # Universal gas constant (in 1976 Standard Atmosphere)
     Md = 28.964 # molecular weight of dry air [gm/mol]
     Mv = 18.016 # molecular weight of water vapor [gm/mol]
     
+    The function returns a vector with humid air densities
     """
-    
+    if temperature.shape != relative_humidity.shape or temperature.shape != pressure.shape:
+        raise ValueError("Input arrays must have the same shape") 
+
+
     Rd = 287.05 # J/(kg*degK)  | Gas constant for dry air (R/Md)
     Rv = 461.495 # J/(kg*degK) | Gas constant for water vapor (R/Mv)
 
@@ -70,20 +79,19 @@ def calc_humid_air_density(temperature, relative_humidity, pressure):
     return rho_h
 
 
-def calc_tsr(tip_speed, wind_speed):
+def calc_tsr(tip_speed: float, wind_speed: float) -> float:
     """
     Calculate Tip-speed Ratio (TSR)
     tip_speed Linear speed of blade tip [m/s]
     wind_speed in [m/s]
     return tip-speed ratio [0, 1]
     """
-    
     tsr = tip_speed / wind_speed
 
     return tsr
 
 
-def calc_wt_output_power(rated_power, area, power_coeff, cut_in, cut_out, air_density, wind_speed):
+def calc_wt_output_power(rated_power: float, area: float, power_coeff: float, cut_in: float, cut_out: float, air_density: np.ndarray, wind_speed: np.ndarray) -> np.ndarray:
     """
     Calculate the output power of a wind turbine
     rated_power in [kW]
@@ -98,22 +106,17 @@ def calc_wt_output_power(rated_power, area, power_coeff, cut_in, cut_out, air_de
 
     """
 
-    #TODO: add for loops or install numpy?
+    if air_density.shape != wind_speed.shape:
+        raise ValueError(("air_density and wind_speed must have the same shape"))
     
     # Cut-in / cut-out
-    if wind_speed < cut_in:
-        wind_speed = 0
-    elif wind_speed > cut_out:
-        wind_speed = 0
-    else:
-        wind_speed = wind_speed
-
+    wind_speed[wind_speed < cut_in] = 0
+    wind_speed[wind_speed > cut_out] = 0
     
     p_out = (power_coeff * area * air_density * wind_speed**3) / 2 # [W]
     p_out = p_out / 1000 # [kW]
 
-    # Power Ratings
-    if p_out > rated_power:
-        p_out = rated_power
-    
+    # Limit output to rated power
+    p_out[p_out > rated_power] = rated_power
+        
     return p_out
