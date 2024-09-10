@@ -1,68 +1,73 @@
 """
-The ``jthomwindlib`` module contains the class WindTurbine that implements
-a wind turbine and functions needed for the modelling of a
-wind turbine.
-In order to avoid "for loops" this library is vectorised with NumPy as a dependency.
+The ``wind_functions.py`` module contains functions needed for calculations of the 
+energy yield forecast of a wind turbine.
+In order to avoid "for loops" this library is vectorised with NumPy as external dependency.
+It also contains theh function to retrieve the weather forecast.
 
 SPDX-FileCopyrightText: 2024 <jorgethomasm@ieee.org>
 SPDX-License-Identifier: MIT
 """
 
 import numpy as np  # transform Python to R or MATLAB
-import math
-from dataclasses import dataclass
+import openmeteo_requests
+import requests_cache
+import pandas as pd
+from retry_requests import retry
 
-@dataclass
-class WindTurbine:
-    """ 
-    A custom and simple model of the requiered attributes and
-    properties of a Wind Turbine
+def get_weather_forecast(latitude: float, longitude: float) -> pd.DataFrame:
     """
-    # ====== Wind Turbine Atributes (Specs) ======
+    Extract weather forecast from the free Open Meteo service.
+    Only included weather variables needed for the wind power calculations.
 
-    manufacturer: str  # e.g. Goldwin
-    model: str # e.g. GW 165-6.0 6300 
+
+    """
     
-    # Location
-    latitude: float
-    longitude: float
+    # Setup the Open-Meteo API client with cache and retry on error
+    cache_session = requests_cache.CachedSession('.cache', expire_after = 3600)
+    retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
+    openmeteo = openmeteo_requests.Client(session = retry_session)
 
-    rated_power: float # [kW]
-    rated_wind_speed: float # [m/s] at standard air density
-    area: float # squared metres
-    hub_height: float # metres
-    power_coefficient: float # Cp
-    rotor_diameter: float # metres
+    # Make sure all required weather variables are listed here
+    # The order of variables in hourly or daily is important to assign them correctly below
+    url = "https://api.open-meteo.com/v1/dwd-icon"
+    params = {
+    	"latitude": latitude,
+    	"longitude": longitude,
+    	"hourly": ["relative_humidity_2m", "surface_pressure", "wind_speed_120m", "temperature_120m"],
+    	"wind_speed_unit": "ms",
+    	"timeformat": "unixtime"
+    }
+    responses = openmeteo.weather_api(url, params=params)
 
-    cut_in_speed: float # m/s
-    cut_out_speed: float # m/s
+    # Process first location. Add a for-loop for multiple locations or weather models
+    response = responses[0]
+    print(f"Coordinates {response.Latitude()}°N {response.Longitude()}°E")
+    print(f"Elevation {response.Elevation()} m asl")
+    print(f"Timezone {response.Timezone()} {response.TimezoneAbbreviation()}")
+    print(f"Timezone difference to GMT+0 {response.UtcOffsetSeconds()} s")
 
-    # Variable Speed - Variable pitch  
+    # Process hourly data. The order of variables needs to be the same as requested.
+    hourly = response.Hourly()
+    hourly_relative_humidity_2m = hourly.Variables(0).ValuesAsNumpy()
+    hourly_surface_pressure = hourly.Variables(1).ValuesAsNumpy()
+    hourly_wind_speed_120m = hourly.Variables(2).ValuesAsNumpy()
+    hourly_temperature_120m = hourly.Variables(3).ValuesAsNumpy()
 
-    # Speed Range During Power Production
-    min_speed: float # [RPM]
-    max_speed: float # [RPM] Nominal
+    hourly_data = {"date": pd.date_range(
+    	start = pd.to_datetime(hourly.Time(), unit = "s", utc = True),
+    	end = pd.to_datetime(hourly.TimeEnd(), unit = "s", utc = True),
+    	freq = pd.Timedelta(seconds = hourly.Interval()),
+    	inclusive = "left"
+    )}
+    hourly_data["relative_humidity_2m"] = hourly_relative_humidity_2m
+    hourly_data["surface_pressure"] = hourly_surface_pressure
+    hourly_data["wind_speed_120m"] = hourly_wind_speed_120m
+    hourly_data["temperature_120m"] = hourly_temperature_120m
 
-    # Tip speed of blade 
-    @property
-    def min_tip_speed(self) -> float:
-        """
-        Linear speed of blade tip for Tip-Speed Ratio (lambda) calculation.
-        It returns Min. tip-speed in [m/s]
-        """
-        return 2*math.pi*(self.min_speed/60)*(self.rotor_diameter/2)
-    
-    @property
-    def max_tip_speed(self) -> float:
-        """
-        Linear speed of blade tip for Tip-Speed Ratio (lambda) calculation.
-        It returns Max. tip-speed in [m/s]
-        Sometimes this can be obtained directly from tech-spechs.
-        """
-        # max_tip_speed <- 92 # [m/s] # From Specs.
+    hourly_df = pd.DataFrame(data = hourly_data)
 
-        return 2*math.pi*(self.max_speed/60)*(self.rotor_diameter/2)
-   
+    return hourly_df
+
 
 def calc_sat_water_vapour_press(temperature: np.ndarray) -> np.ndarray:
      
