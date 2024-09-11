@@ -12,7 +12,26 @@ import numpy as np  # transform Python to R or MATLAB
 import openmeteo_requests
 import requests_cache
 import pandas as pd
+import csv
 from retry_requests import retry
+
+def read_csv_to_tuples(file_path: str, has_header = True) -> list[tuple]:
+        """
+        Read a text file (csv) with the geographical coordinates of each wind turbine.
+        The file must have two columns: one for latitude and the other for longitude, in that order.
+        The function returns a list of tuples.
+        """
+
+        with open(file_path, 'r') as file:
+            csv_reader = csv.reader(file)
+            
+            if has_header:
+                 next(csv_reader)  # Skip the header row
+            
+            list_of_tuples = [tuple(row) for row in csv_reader]
+
+        return list_of_tuples
+
 
 def get_weather_forecast(latitude: float, longitude: float) -> pd.DataFrame:
     """
@@ -148,7 +167,7 @@ def calc_wt_output_power(rated_power: float, area: float, power_coeff: float, cu
     Calculate the output power of a wind turbine
     rated_power in [kW]
     area circular swept area in [squared metres]
-    Cp Power Coefficient
+    Power Coefficient (Cp)
     cut_in cut-in wind speed [m/s]
     cut_out cut-out wind speed [m/s]
     air_density dry or humid air density [kg/m**3]
@@ -161,11 +180,18 @@ def calc_wt_output_power(rated_power: float, area: float, power_coeff: float, cu
     if air_density.shape != wind_speed.shape:
         raise ValueError(("air_density and wind_speed must have the same shape"))
     
+    Cp = power_coeff # wt efficiency 
+
     # Cut-in / cut-out
     wind_speed[wind_speed < cut_in] = 0
     wind_speed[wind_speed > cut_out] = 0
     
-    p_out = (power_coeff * area * air_density * wind_speed**3) / 2 # [W]
+    p_in = (area * air_density * wind_speed**3) / 2 # [W]
+    
+    # TODO: Get Power curve for the turbine model
+    
+    p_out = Cp * p_in # [W]
+    
     p_out = p_out / 1000 # [kW]
 
     # Limit output to rated power
