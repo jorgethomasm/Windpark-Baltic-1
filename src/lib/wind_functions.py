@@ -162,39 +162,64 @@ def calc_tsr(tip_speed: float, wind_speed: float) -> float:
     return tsr
 
 
-def calc_wt_output_power(rated_power: float, area: float, power_coeff: float, cut_in: float, cut_out: float, air_density: np.ndarray, wind_speed: np.ndarray) -> np.ndarray:
+
+def calc_wt_input_power(area: float, cut_in: float, cut_out: float, air_density: np.ndarray, wind_speed: np.ndarray) -> np.ndarray:
+    """
+    Calculate the input power of a wind turbine,
+    i.e., the kinetic power of the wind.
+    
+    - area: circular swept area in [squared metres]    
+    - air_density: dry or humid air density [kg/m**3]
+    - wind_speed: in [m/s]
+
+    return kinetic wind (input) power [kW]
+
+    """
+
+    if air_density.shape != wind_speed.shape:
+        raise ValueError(("air_density and wind_speed must have the same shape")) 
+    
+    p_in = (area * air_density * wind_speed**3) / 2 # wind power [W]
+
+    p_in = p_in/1000 # [kW]
+            
+    return p_in
+
+
+
+def calc_wt_output_power(rated_power: float, input_power: np.ndarray, power_coeff: float, cut_in: float, cut_out: float, wind_speed: np.ndarray) -> np.ndarray:
     """
     Calculate the output power of a wind turbine
     rated_power in [kW]
-    area circular swept area in [squared metres]
+    input wind power [kW]
     Power Coefficient (Cp)
     cut_in cut-in wind speed [m/s]
-    cut_out cut-out wind speed [m/s]
-    air_density dry or humid air density [kg/m**3]
+    cut_out cut-out wind speed [m/s]    
     wind_speed in [m/s]
 
     return generated electrical power [kW]
 
     """
 
-    if air_density.shape != wind_speed.shape:
+    if input_power.shape != wind_speed.shape:
         raise ValueError(("air_density and wind_speed must have the same shape"))
     
+    # Standard var names for equations
+    p_in = input_power
     Cp = power_coeff # wt efficiency 
 
     # Cut-in / cut-out
-    wind_speed[wind_speed < cut_in] = 0
-    wind_speed[wind_speed > cut_out] = 0
+    p_in[wind_speed < cut_in] = 0
+    p_in[wind_speed > cut_out] = 0
+        
     
-    p_in = (area * air_density * wind_speed**3) / 2 # [W]
+    # TODO: Get Power or CP curve for the turbine model
     
-    # TODO: Get Power curve for the turbine model
-    
-    p_out = Cp * p_in # [W]
-    
-    p_out = p_out / 1000 # [kW]
+    # Add if else here 
+
+    p_out = Cp * p_in # [kW]    
 
     # Limit output to rated power
-    p_out[p_out > rated_power] = rated_power
+    p_out[p_out > rated_power] = rated_power # override efficiency (Cp) drop
         
     return p_out

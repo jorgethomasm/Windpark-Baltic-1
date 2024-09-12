@@ -41,7 +41,7 @@ def main():
     # Get weather forecast for each wind turbine
     weather_data = [] 
     for coordinates in wt_geocoords:
-        weather_data.append(windfun.get_weather_forecast(*coordinates)) # arg latitude, longitude
+        weather_data.append(windfun.get_weather_forecast(*coordinates))
 
     
     
