@@ -67,10 +67,27 @@ def get_weather_forecast(latitude: float, longitude: float) -> pd.DataFrame:
 
     # Process hourly data. The order of variables needs to be the same as requested.
     hourly = response.Hourly()
-    hourly_relative_humidity_2m = hourly.Variables(0).ValuesAsNumpy()
+    
+    hourly_relative_humidity_2m = hourly.Variables(0).ValuesAsNumpy()    
     hourly_surface_pressure = hourly.Variables(1).ValuesAsNumpy()
-    hourly_wind_speed_120m = hourly.Variables(2).ValuesAsNumpy()
-    hourly_temperature_120m = hourly.Variables(3).ValuesAsNumpy()
+    
+    hourly_wind_speed_10m = hourly.Variables(2).ValuesAsNumpy()
+    hourly_wind_speed_80m = hourly.Variables(3).ValuesAsNumpy()
+    hourly_wind_speed_120m = hourly.Variables(4).ValuesAsNumpy()
+    hourly_wind_speed_180m = hourly.Variables(5).ValuesAsNumpy()
+        
+    hourly_temperature_2m = hourly.Variables(6).ValuesAsNumpy()
+    hourly_temperature_80m = hourly.Variables(7).ValuesAsNumpy()
+    hourly_temperature_120m = hourly.Variables(8).ValuesAsNumpy()
+    hourly_temperature_180m = hourly.Variables(9).ValuesAsNumpy()
+
+    hourly_wind_gusts_10m = hourly.Variables(10).ValuesAsNumpy()
+
+    hourly_wind_direction_10m = hourly.Variables(11).ValuesAsNumpy()
+    hourly_wind_direction_80m = hourly.Variables(12).ValuesAsNumpy()
+    hourly_wind_direction_120m = hourly.Variables(13).ValuesAsNumpy()
+    hourly_wind_direction_180m = hourly.Variables(14).ValuesAsNumpy()
+
 
     hourly_data = {"date": pd.date_range(
     	start = pd.to_datetime(hourly.Time(), unit = "s", utc = True),
@@ -80,8 +97,23 @@ def get_weather_forecast(latitude: float, longitude: float) -> pd.DataFrame:
     )}
     hourly_data["relative_humidity_2m"] = hourly_relative_humidity_2m
     hourly_data["surface_pressure"] = hourly_surface_pressure
+
+    hourly_data["wind_speed_10m"] = hourly_wind_speed_10m
+    hourly_data["wind_speed_80m"] = hourly_wind_speed_80m
     hourly_data["wind_speed_120m"] = hourly_wind_speed_120m
+    hourly_data["wind_speed_180m"] = hourly_wind_speed_180m
+
+    hourly_data["wind_gusts_10m"] = hourly_wind_gusts_10m
+    
+    hourly_data["temperature_2m"] = hourly_temperature_2m
+    hourly_data["temperature_80m"] = hourly_temperature_80m
     hourly_data["temperature_120m"] = hourly_temperature_120m
+    hourly_data["temperature_180m"] = hourly_temperature_180m
+
+    hourly_data["wind_direction_10m"] = hourly_wind_direction_10m
+    hourly_data["wind_direction_80m"] = hourly_wind_direction_80m
+    hourly_data["wind_direction_120m"] = hourly_wind_direction_120m
+    hourly_data["wind_direction_180m"] = hourly_wind_direction_180m
 
     hourly_df = pd.DataFrame(data = hourly_data)
 
@@ -187,7 +219,7 @@ def calc_wt_input_power(area: float, cut_in: float, cut_out: float, air_density:
 
 
 
-def calc_wt_output_power(rated_power: float, input_power: np.ndarray, power_coeff: float, cut_in: float, cut_out: float, wind_speed: np.ndarray) -> np.ndarray:
+def calc_wt_output_power(rated_power: float, input_power: np.ndarray, power_coeff: float, power_curve: pd.DataFrame, cut_in: float, cut_out: float, wind_speed: np.ndarray) -> np.ndarray:
     """
     Calculate the output power of a wind turbine
     rated_power in [kW]
@@ -214,10 +246,14 @@ def calc_wt_output_power(rated_power: float, input_power: np.ndarray, power_coef
         
     
     # TODO: Get Power or CP curve for the turbine model
-    
-    # Add if else here 
+        
+    if power_curve is None:
+         p_out = Cp * p_in # [kW]    
+    else:
+         p_out = Cp * p_in # [kW]    
+        
 
-    p_out = Cp * p_in # [kW]    
+
 
     # Limit output to rated power
     p_out[p_out > rated_power] = rated_power # override efficiency (Cp) drop
