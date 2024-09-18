@@ -53,7 +53,11 @@ def get_weather_forecast(latitude: float, longitude: float) -> pd.DataFrame:
     params = {
     	"latitude": latitude,
     	"longitude": longitude,
-    	"hourly": ["relative_humidity_2m", "surface_pressure", "wind_speed_120m", "temperature_120m"],
+    	"hourly": ["relative_humidity_2m", "surface_pressure", 
+                   "wind_speed_10m","wind_speed_80m", "wind_speed_120m", "wind_speed_180m", 
+                   "temperature_2m", "temperature_80m", "temperature_120m", "temperature_180m",
+                   "wind_gusts_10m",
+                   "wind_direction_10m", "wind_direction_80m", "wind_direction_120m", "wind_direction_180m"],
     	"wind_speed_unit": "ms",
     	"timeformat": "unixtime"
     }

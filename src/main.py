@@ -39,10 +39,9 @@ def main():
                        max_speed=16) for coordinates in wt_geocoords]
     
     # Get weather forecast for each wind turbine
-    weather_data = [] 
+    weather_data = [] # list with data frames
     for coordinates in wt_geocoords:
         weather_data.append(windfun.get_weather_forecast(*coordinates))
-
     
     print("degug")
     
