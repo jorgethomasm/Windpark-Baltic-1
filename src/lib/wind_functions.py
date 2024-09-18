@@ -15,20 +15,21 @@ import pandas as pd
 import csv
 from retry_requests import retry
 
-def read_csv_to_tuples(file_path: str, has_header = True) -> list[tuple]:
+def read_csv_to_tuples(file_path: str) -> list[tuple]:
         """
         Read a text file (csv) with the geographical coordinates of each wind turbine.
-        The file must have two columns: one for latitude and the other for longitude, in that order.
-        The function returns a list of tuples.
+        The file must have a header and three columns: one for the wind turbine id (skiped), 
+        one for latitude and the other for longitude, in that order.
+        The function returns a list of tuples (latitude, longitude).
         """
 
-        with open(file_path, 'r') as file:
+        list_of_tuples = []
+        with open(file_path, mode='r', encoding='utf-8') as file:
             csv_reader = csv.reader(file)
             
-            if has_header:
-                 next(csv_reader)  # Skip the header row
-            
-            list_of_tuples = [tuple(row) for row in csv_reader]
+            next(csv_reader)  # Skip the header row
+            for row in csv_reader:
+                 list_of_tuples.append((row[1], row[2])) # skip id col
 
         return list_of_tuples
 
