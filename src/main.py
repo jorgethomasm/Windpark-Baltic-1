@@ -44,6 +44,7 @@ def main():
         weather_data.append(windfun.get_weather_forecast(*coordinates))
 
     
+    print("degug")
     
 
 

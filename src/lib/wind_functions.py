@@ -29,7 +29,7 @@ def read_csv_to_tuples(file_path: str) -> list[tuple]:
             
             next(csv_reader)  # Skip the header row
             for row in csv_reader:
-                 list_of_tuples.append((row[1], row[2])) # skip id col
+                 list_of_tuples.append((float(row[1]), float(row[2]))) # skip id col
 
         return list_of_tuples
 
