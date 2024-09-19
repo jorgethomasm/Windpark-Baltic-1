@@ -44,9 +44,27 @@ def main():
     weather_data = [] # list with data frames
     for coordinates in wt_geocoords:
         weather_data.append(windfun.get_weather_forecast(*coordinates))
-    
+       
+    # input wind power calculation
+    air_densities = []
+    for i in range(0, len(weather_data)):
+        air_densities.append(windfun.calc_humid_air_density(temperature=weather_data[i].loc[:, 'temperature_80m'], 
+                                                            relative_humidity=weather_data[i].loc[:, 'relative_humidity_2m'], 
+                                                            pressure=weather_data[i].loc[:, 'surface_pressure']))
+    # a= wind_turbines[i].area()
+    p_in = []
+    for i in range(0, len(air_densities)):
+            p_in.append(windfun.calc_wt_input_power(area= wind_turbines[i].area(), 
+                                                    cut_in=wind_turbines[i].cut_in_speed, 
+                                                    cut_out=wind_turbines[i].cut_out_speed, 
+                                                    air_density= air_densities[i], 
+                                                    wind_speed= weather_data[i].loc[:, 'wind_speed_80m']))
+
     print("debug")
-    
+    # output electrical power calculation
+
+
+
 
 
 if __name__ == "__main__":
