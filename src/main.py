@@ -6,6 +6,7 @@ SPDX-FileCopyrightText: 2024 <jorgethomasm@ieee.org>
 SPDX-License-Identifier: MIT
 """
 
+import pandas as pd
 from lib import WindTurbine
 from lib import wind_functions as windfun
 
@@ -31,7 +32,8 @@ def main():
                        rated_power=2300, 
                        rated_wind_speed=13,                         
                        hub_height=67 , 
-                       power_coefficient=0.4, 
+                       power_coefficient=0.4,
+                       power_curve=pd.read_csv("./data/database/swt-93_power_curve.csv"),
                        rotor_diameter=93, 
                        cut_in_speed=4, 
                        cut_out_speed=25, 
@@ -43,7 +45,7 @@ def main():
     for coordinates in wt_geocoords:
         weather_data.append(windfun.get_weather_forecast(*coordinates))
     
-    print("degug")
+    print("debug")
     
 
 

@@ -59,6 +59,7 @@ def get_weather_forecast(latitude: float, longitude: float) -> pd.DataFrame:
                    "wind_gusts_10m",
                    "wind_direction_10m", "wind_direction_80m", "wind_direction_120m", "wind_direction_180m"],
     	"wind_speed_unit": "ms",
+        # "models": "icon_seamless",
     	"timeformat": "unixtime"
     }
     responses = openmeteo.weather_api(url, params=params)
