@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 """
 
 import math
+import numpy as np 
 import pandas as pd
 from dataclasses import dataclass
 
@@ -30,6 +31,7 @@ class WindTurbine:
     rated_wind_speed: float # [m/s] at standard air density    
     hub_height: float # metres
     power_coefficient: float # Cp
+    power_input: np.ndarray #  wind kinetic power in [kW]
     power_curve: pd.DataFrame
     rotor_diameter: float # metres
 

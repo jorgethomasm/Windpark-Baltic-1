@@ -32,6 +32,7 @@ def main():
                                  rated_wind_speed=13,
                                  hub_height=67,
                                  power_coefficient=0.4,
+                                 power_input=None,
                                  power_curve=pd.read_csv("./data/database/swt-93_power_curve.csv"),
                                  rotor_diameter=93,
                                  cut_in_speed=4,
@@ -60,6 +61,12 @@ def main():
                                                 air_density=air_densities[i],
                                                 wind_speed=weather_data[i].loc[:, 'wind_speed_80m']))
 
+    # Add input power to wind_turbines attributes
+    for i in range(0, len(air_densities)):
+        wind_turbines[i].power_input = p_in[i]
+    
+    
+    # Save Table in data / RAW (for Power BI Vis)
     wtkeys = ['WT' + str(i+1) for i in range(len(wt_geocoords))]
         
     df_p_in = pd.concat(p_in, keys=wtkeys)
@@ -69,7 +76,16 @@ def main():
 
         
     # Output electrical power calculation
-    
+    p_out =[]
+    for i in range(0, len(air_densities)):
+        p_out.append(windfun.calc_wt_output_power(rated_power=wind_turbines[i].rated_power, 
+                                                  input_power=wind_turbines[i].power_input,
+                                                  power_coeff=wind_turbines[i].power_coefficient,
+                                                  power_curve= wind_turbines[i].power_curve, 
+                                                  cut_in= wind_turbines[i].cut_in_speed, 
+                                                  cut_out= wind_turbines[i].cut_out_speed, 
+                                                  wind_speed = weather_data[i].loc[:, 'wind_speed_80m']))
+
 
 
 if __name__ == "__main__":

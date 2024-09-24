@@ -249,19 +249,15 @@ def calc_wt_output_power(rated_power: float, input_power: np.ndarray, power_coef
     # Cut-in / cut-out
     p_in[wind_speed < cut_in] = 0
     p_in[wind_speed > cut_out] = 0
-        
-    
-    # TODO: Get Power or CP curve for the turbine model
-        
+          
     if power_curve is None:
-         p_out = Cp * p_in # [kW]    
+         p_out = Cp * p_in # [kW]   
     else:
-         p_out = Cp * p_in # [kW]    
-        
-
-
+         pc = power_curve.to_numpy()
+         # TODO continue here
+    
 
     # Limit output to rated power
-    p_out[p_out > rated_power] = rated_power # override efficiency (Cp) drop
+    p_out[p_out > rated_power] = rated_power # override efficiency (Cp drop)
         
     return p_out
