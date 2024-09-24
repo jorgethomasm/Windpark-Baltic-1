@@ -67,13 +67,11 @@ def main():
     
     
     # Save Table in data / RAW (for Power BI Vis)
-    wtkeys = ['WT' + str(i+1) for i in range(len(wt_geocoords))]
-        
-    df_p_in = pd.concat(p_in, keys=wtkeys)
-    df_p_in.columns = ["id", "record", "p_in_kW"]
-    # df_p_in.drop("record", axis=1, inplace=True)
-    df_p_in.to_csv("./data/raw/p_in.csv", header=True, index=True, index_label='id')
-
+    wtkeys = ['WT' + str(i+1) for i in range(len(wt_geocoords))]       
+    # df_p_in = pd.concat(p_in, keys=wtkeys)
+    # df_p_in.columns = ["id", "record", "p_in_kW"]
+    # # df_p_in.drop("record", axis=1, inplace=True)
+    # df_p_in.to_csv("./data/raw/p_in.csv", header=True, index=True, index_label='id')
         
     # Output electrical power calculation
     p_out =[]
@@ -85,6 +83,13 @@ def main():
                                                   cut_in= wind_turbines[i].cut_in_speed, 
                                                   cut_out= wind_turbines[i].cut_out_speed, 
                                                   wind_speed = weather_data[i].loc[:, 'wind_speed_80m']))
+        
+    
+    df_p_out = pd.DataFrame.from_records(p_out).transpose()
+    df_p_out.columns = wtkeys    
+    df_p_out['datetime'] = weather_data[0].date
+    df_p_out_long = pd.melt(df_p_out, id_vars='datetime', value_vars=wtkeys, var_name='id', value_name='output_kW')
+    df_p_out_long.to_csv("./data/raw/p_out.csv", header=True, index=False)
 
 
 

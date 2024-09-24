@@ -252,12 +252,12 @@ def calc_wt_output_power(rated_power: float, input_power: np.ndarray, power_coef
           
     if power_curve is None:
          p_out = Cp * p_in # [kW]   
-    else:
-         pc = power_curve.to_numpy()
-         # TODO continue here
+    else:         
+         p_out = np.interp(wind_speed, power_curve['windspeed'], power_curve['output_kW'])       
     
 
-    # Limit output to rated power
+    # Limit output to rated powers    
     p_out[p_out > rated_power] = rated_power # override efficiency (Cp drop)
+    p_out[wind_speed < cut_in] = 0
         
     return p_out
