@@ -1,27 +1,47 @@
 ---
 title: "Baltic-1-Energy-Forecast"
 author: "Jorge A. Thomas"
-format: html
-editor: visual
+date: "`r Sys.Date()`"
+format:    
+    html:
+      self-contained: true
+      code-fold: true
+      df-print: tibble
+      code-summary: "Show the code"
+      grid: 
+        margin-width: 350px
+execute: 
+  echo: fenced
+reference-location: margin
+citation-location: document
 ---
 
-## Quarto
+## Report
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+### Running Code
 
 ```{r}
-1 + 1
-```
-
-You can add options to executable code like this
-
-```{r}
+#| label: etl_report
+#| message: false
 #| echo: false
-2 * 2
+
+# ======================== Baltic-1ßEnergy-Yield-Forecast =========================
+# Oktober 2024
+# @jorgethomasm
+
+# ========================== Load Dependencies ==========================
+library("reticulate")
+
+# Use a specific virtualenv
+#reticulate::use_virtualenv(paste0("/opt/", Sys.getenv("VENV_NAME")), required = TRUE)
+
+reticulate::source_python("./src/main.py")
+
+paste("UPDATE TIME:", Sys.time())
+
+# p_out_df <- py$p_out
+# head(p_out_df)
+
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+Power output calculations saved in ./data/raw/
